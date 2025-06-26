@@ -139,7 +139,7 @@ void block() {
         curTab_ = newTable(curTab_);
         curTab_->id = numblock_;
 		numblock_++; // identificador do bloco
-		printf("[BLOCK] criando bloco id=%d, tabcur=%p  pai %p\n", curTab_->id, (void*)curTab_, (void*)curTab_->parent );
+		//printf("[BLOCK] criando bloco id=%d, tabcur=%p  pai %p\n", curTab_->id, (void*)curTab_, (void*)curTab_->parent );
         dec();
         listComand();
 
@@ -727,7 +727,7 @@ void newConst(TYPE cons) {
     insertSymbol(curTab_, cname, cons, 0);  // 👈 agora com o argumento `size = 0`
 	
     if (cons == int_t) {
-		printf ("criando const %s %d\n", cname, atoi(token_->value));
+		//printf ("criando const %s %d\n", cname, atoi(token_->value));
         setValueInt(findSymbol(curTab_, cons_name), atoi(token_->value));
 	}
     else if (cons == string_t)

@@ -26,6 +26,8 @@ int nextInstructionCode() {
     return codinstr_;
 }
 
+void printEscaped(const char* s);
+
 void disassemble() {
     printf("==== D I S A S S E M B L Y ====\n");
 
@@ -110,7 +112,9 @@ void disassemble() {
                         printf("(%.3f)", getFloat(s));
                         break;
                     case string_t:
-                        printf("(\"%s\")", getString(s));
+                        printf("(");
+                        printEscaped(getString(s));
+                        printf(")");
                         break;
                 }
             }
@@ -130,7 +134,9 @@ void disassemble() {
                         printf("(%.3f)", getFloat(s));
                         break;
                     case string_t:
-                        printf("(\"%s\")", getString(s));
+                        printf("(");
+                        printEscaped(getString(s));
+                        printf(")");
                         break;
                 }
             }
@@ -150,20 +156,44 @@ void disassemble() {
                         printf("(%.3f)", getFloat(s));
                         break;
                     case string_t:
-                        printf("(\"%s\")", getString(s));
+                        printf("(");
+                        printEscaped(getString(s));
+                        printf(")");
                         break;
                 }
             }
         }
 
         printf("\n");
-        printf("\n");
+        
     }
 
     free(entries);
     printf("==============================\n");
 }
 
+
+void printEscaped(const char* s) {
+    putchar('"');
+    for (; *s; s++) {
+        if (*s == '\n') {
+            printf("\\n");
+        } else if (*s == '\r') {
+            printf("\\r");
+        } else if (*s == '\t') {
+            printf("\\t");
+        } else if (*s == '\"') {
+            printf("\\\"");
+        } else if (*s == '\\') {
+            printf("\\\\");
+        } else if ((unsigned char)*s < 32) {
+            printf("\\x%02X", (unsigned char)*s);
+        } else {
+            putchar(*s);
+        }
+    }
+    putchar('"');
+}
 
 // Insere ou atualiza a instrução no mapa simples (implementação simples de mapa)
 static void instructs_insert(int key, struct instruction* value) {
