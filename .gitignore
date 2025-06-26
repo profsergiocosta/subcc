@@ -1,0 +1,31 @@
+# Arquivos de build
+*.o
+*.out
+*.a
+*.so
+*.exe
+
+# Diretórios comuns de build
+/build/
+/bin/
+/obj/
+
+# Arquivos de log e temporários
+*.log
+*.tmp
+*.swp
+*~
+
+# Backup de editores
+*.bak
+
+# Arquivos gerados por editores
+.DS_Store
+.vscode/
+*.code-workspace
+*.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Makefile intermediários (opcional)
+Makefile~
