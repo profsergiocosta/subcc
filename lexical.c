@@ -8,9 +8,11 @@
 #include "lexical.h"
 
 #define KWLIST_SZ 8
-#define MAXTOKEN 16
+#define MAXTOKEN 64
 
-char *kwlist[KWLIST_SZ] = {"main", "int", "float", "if", "else", "while", "printf", "scanf"};
+char *kwlist[KWLIST_SZ] = {
+    "main", "int", "float", "if", "else", "while", "printf", "scanf"
+};
 
 char look_;
 int line_;
@@ -54,10 +56,11 @@ Token *newToken(int tk, const char *value) {
     Token *token = (Token *) fmalloc(sizeof(Token));
     token->type = tk;
     token->line = line_;
-    token->value = strdup(value);
+    token->value = str(value);  // Usa o buffer global de mstring
     return token;
 }
 
+// Leitura do próximo token
 Token *nextToken() {
     if (!feof(inputfile)) {
         tokvalue_[0] = '\0';
@@ -74,12 +77,13 @@ Token *nextToken() {
 }
 
 Token *getAlpha() {
+    int len = 0;
     tokvalue_[0] = '\0';
+
     while (!feof(inputfile) && (look_ == '_' || isalnum(look_))) {
-        if (strlen(tokvalue_) < MAXTOKEN) {
-            int len = strlen(tokvalue_);
-            tokvalue_[len] = look_;
-            tokvalue_[len + 1] = '\0';
+        if (len < MAXTOKEN) {
+            tokvalue_[len++] = look_;
+            tokvalue_[len] = '\0';
         }
         nextChar();
     }
@@ -92,6 +96,7 @@ Token *getAlpha() {
 
 Token *getString() {
     int csp = 0;
+    int len = 0;
     tokvalue_[0] = '\0';
 
     while (look_ != '"') {
@@ -111,10 +116,9 @@ Token *getString() {
                 csp = 0;
             }
 
-            int len = strlen(tokvalue_);
             if (len < MAXTOKEN) {
-                tokvalue_[len] = ch;
-                tokvalue_[len + 1] = '\0';
+                tokvalue_[len++] = ch;
+                tokvalue_[len] = '\0';
             }
         }
         nextChar();
@@ -125,15 +129,15 @@ Token *getString() {
 
 Token *getNum() {
     int tk = TK_INT;
+    int len = 0;
     tokvalue_[0] = '\0';
 
     while (!feof(inputfile) && (isdigit(look_) || (look_ == '.' && tk == TK_INT))) {
         if (look_ == '.') tk = TK_FLOAT;
 
-        int len = strlen(tokvalue_);
         if (len < MAXTOKEN) {
-            tokvalue_[len] = look_;
-            tokvalue_[len + 1] = '\0';
+            tokvalue_[len++] = look_;
+            tokvalue_[len] = '\0';
         }
         nextChar();
     }
@@ -297,7 +301,8 @@ int isOp(char c) {
 }
 
 int openFile(const char *filename) {
-    return ((inputfile = fopen(filename, "r")) != NULL);
+    inputfile = fopen(filename, "r");
+    return (inputfile != NULL);
 }
 
 void closeFile() {

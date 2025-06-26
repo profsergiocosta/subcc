@@ -9,11 +9,11 @@ enum {
     TK_ENDER, TK_AND, TK_OR, TK_EOF, TK_ERROR, TK_UNDEFINED, TK_COMMENT
 };
 
-struct Token {
+typedef struct Token {
     int type;
     char* value;
     int line;
-};
+} Token;
 
 void init();
 int  openFile(const char *filename);
