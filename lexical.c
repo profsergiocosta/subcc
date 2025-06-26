@@ -29,7 +29,7 @@ Token *newToken(int tk, const char *value);
 Token *getNum();
 Token *getAlpha();
 Token *getOper();
-Token *getString();
+Token *scanString();
 
 int isOp(char c);
 
@@ -94,7 +94,7 @@ Token *getAlpha() {
     return newToken(tk, tokvalue_);
 }
 
-Token *getString() {
+Token *scanString() {
     int csp = 0;
     int len = 0;
     tokvalue_[0] = '\0';
@@ -251,7 +251,7 @@ Token *getOper() {
 
         case '"':
             nextChar();
-            return getString();
+            return scanString();
     }
 
     nextChar();
