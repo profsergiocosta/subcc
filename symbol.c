@@ -22,6 +22,14 @@ struct symtab* rootTable(void) {
     return firstTab_;
 }
 
+struct symtab* rootTable_(void) {
+    if (!firstTab_) {
+        // Se não existe raiz, cria com escopo NULL (global)
+        firstTab_ = lastTab_ = newTable(NULL);
+    }
+    return firstTab_;
+}
+
 struct symtab* newTable(struct symtab* enclosing_scope) {
     struct symtab* st = (struct symtab*) fmalloc(sizeof(struct symtab));
     st->parent = enclosing_scope;
@@ -32,6 +40,7 @@ struct symtab* newTable(struct symtab* enclosing_scope) {
     tablelistInsert(st);
     return st;
 }
+
 
 struct symbol* findSymbol(struct symtab* st, char* name) {
     while (st) {
@@ -127,13 +136,50 @@ void setValueString(struct symbol* sym, char* obj) {
 }
 
 int getInt(struct symbol* sym) {
-    return sym ? sym->val->int_value : 0;
+    if (!sym || !sym->val) return 0;
+    switch (sym->t) {
+        case int_t:
+            return sym->val->int_value;
+        case float_t:
+            return (int)sym->val->float_value;
+        case string_t:
+            return atoi(sym->val->str_value);
+        default:
+            return 0;
+    }
 }
 
 float getFloat(struct symbol* sym) {
-    return sym ? sym->val->float_value : 0.0f;
+    if (!sym || !sym->val) return 0.0f;
+    switch (sym->t) {
+        case int_t:
+            return (float)sym->val->int_value;
+        case float_t:
+            return sym->val->float_value;
+        case string_t:
+            return (float)atof(sym->val->str_value);
+        default:
+            return 0.0f;
+    }
 }
 
 const char* getString(struct symbol* sym) {
-    return sym ? sym->val->str_value : "";
+    if (!sym || !sym->val) return "";
+    switch (sym->t) {
+        case int_t: {
+            static char buf[32];
+            snprintf(buf, sizeof(buf), "%d", sym->val->int_value);
+            return buf;
+        }
+        case float_t: {
+            static char buf[32];
+            snprintf(buf, sizeof(buf), "%.6f", sym->val->float_value);
+            return buf;
+        }
+        case string_t:
+            return sym->val->str_value;
+        default:
+            return "";
+    }
 }
+

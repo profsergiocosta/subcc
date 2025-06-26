@@ -137,9 +137,9 @@ void block() {
     if (token_->type == TK_ACHAVE) {
         token_ = nextToken();
         curTab_ = newTable(curTab_);
-        numblock_++; // identificador do bloco
         curTab_->id = numblock_;
-
+		numblock_++; // identificador do bloco
+		printf("[BLOCK] criando bloco id=%d, tabcur=%p  pai %p\n", curTab_->id, (void*)curTab_, (void*)curTab_->parent );
         dec();
         listComand();
 
@@ -563,30 +563,32 @@ void ifStruct() {
 }
 
 void whileStruct() {
-    int codinst_1, codinst_2, codinst_3;
+    int cond_inst, jeqz_inst, end_inst;
+
     token_ = nextToken();
-    if (token_->type == TK_APAREN) {
-        token_ = nextToken();
-        codinst_3 = gen3ai(EMPTY, "", "", "", 0);  // para poder verificar antes da expressão
-        expr();
-
-        if (token_->type == TK_FPAREN) {
-            token_ = nextToken();
-
-            codinst_1 = gen3ai(JEQZ, str(arg_), "", "", 0);
-            gen3ai(BLOCK, intToString(numblock_), "", "", 0);
-            block();
-            (gen3ai(BLOCKEND, "", "", "", 0) + 1);
-            gen3ai(JUMP, intToString(codinst_3), "", "", 0);
-            codinst_2 = gen3ai(EMPTY, "", "", "", 0);
-            backpatch(codinst_1, intToString(codinst_2));
-        }
-        else
-            error(token_->line, EXPEC, ")");
-    }
-    else
+    if (token_->type != TK_APAREN)
         error(token_->line, EXPEC, "(");
+
+    token_ = nextToken();
+    
+    cond_inst = gen3ai(EMPTY, "", "", "", 0);  // Inserir EMPTY ANTES da expressão
+    expr();  // Gera OPMENOR
+
+    if (token_->type != TK_FPAREN)
+        error(token_->line, EXPEC, ")");
+
+    token_ = nextToken();
+
+    jeqz_inst = gen3ai(JEQZ, str(arg_), "", "", 0);  // salta se condição falsa
+    gen3ai(BLOCK, intToString(numblock_), "", "", 0);
+    block();
+    gen3ai(BLOCKEND, "", "", "", 0);
+    gen3ai(JUMP, intToString(cond_inst), "", "", 0);  // volta pro EMPTY antes da expr()
+    end_inst = gen3ai(EMPTY, "", "", "", 0);
+    backpatch(jeqz_inst, intToString(end_inst));
 }
+
+
 
 void atribuicao() {
     char* arg1;
@@ -621,6 +623,8 @@ void programa() {
             if (token_->type == TK_FPAREN) {
                 token_ = nextToken();
                 block();
+				//dec();
+        		//listComand();
             }
             else
                 error(token_->line, EXPEC, ")");
@@ -638,6 +642,8 @@ int executa(const char* filename) {
         programa();
         token_ = nextToken();
         closeFile();
+		disassemble();
+
         interprete(rootTable());
         return 1;
     }
@@ -646,6 +652,53 @@ int executa(const char* filename) {
         return 0;
     }
 }
+
+
+/*
+char* newTemp(TYPE cons) {
+    char Buf[10];
+    sprintf(Buf, "%i", numtemp_);
+
+    char var[50];
+    strcpy(var, "_TEMP_");
+    strcat(var, Buf);
+
+    // ✅ Cria sempre no escopo raiz
+    insertSymbol(rootTable(), str(var), cons, 0);  
+	
+
+    numtemp_++;
+
+    return str(var);
+}
+
+
+void newConst(TYPE cons) {
+    char Buf[10];
+    sprintf(Buf, "%i", numtemp_);
+
+    char cons_name[50];
+    strcpy(cons_name, "_CONST_");
+    strcat(cons_name, Buf);
+
+    char* cname = str(cons_name);
+
+    // ✅ Sempre cria no rootTable()
+    insertSymbol(rootTable(), cname, cons, 0);
+
+    if (cons == int_t)
+        setValueInt(findSymbol(rootTable(), cons_name), atoi(token_->value));
+    else if (cons == string_t)
+        setValueString(findSymbol(rootTable(), cons_name), token_->value);
+    else if (cons == float_t)
+        setValueFloat(findSymbol(rootTable(), cons_name), (float)atof(token_->value));
+
+    arg_ = cname;
+
+    numtemp_++;
+}
+	*/
+
 
 char* newTemp(TYPE cons) {
     char Buf[10];
@@ -669,12 +722,14 @@ void newConst(TYPE cons) {
     char cons_name[50];
     strcpy(cons_name, "_CONST_");
     strcat(cons_name, Buf);
-
+	
     char* cname = str(cons_name);
     insertSymbol(curTab_, cname, cons, 0);  // 👈 agora com o argumento `size = 0`
-
-    if (cons == int_t)
+	
+    if (cons == int_t) {
+		printf ("criando const %s %d\n", cname, atoi(token_->value));
         setValueInt(findSymbol(curTab_, cons_name), atoi(token_->value));
+	}
     else if (cons == string_t)
         setValueString(findSymbol(curTab_, cons_name), token_->value);
     else if (cons == float_t)

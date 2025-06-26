@@ -21,6 +21,150 @@ struct instructMapEntry {
 static struct instructMapEntry* instructs_ = NULL;
 static int codinstr_ = 1;
 
+
+int nextInstructionCode() {
+    return codinstr_;
+}
+
+void disassemble() {
+    printf("==== D I S A S S E M B L Y ====\n");
+
+    // 1. Contar quantas instruções existem
+    int count = 0;
+    struct instructMapEntry* entry = instructs_;
+    while (entry) {
+        count++;
+        entry = entry->next;
+    }
+
+    if (count == 0) {
+        printf("[nenhuma instrução gerada]\n");
+        return;
+    }
+
+    // 2. Copiar para vetor
+    struct instructMapEntry** entries = malloc(sizeof(struct instructMapEntry*) * count);
+    entry = instructs_;
+    for (int i = 0; i < count; i++) {
+        entries[i] = entry;
+        entry = entry->next;
+    }
+
+    // 3. Ordenar por chave (key)
+    for (int i = 0; i < count - 1; i++) {
+        for (int j = i + 1; j < count; j++) {
+            if (entries[i]->key > entries[j]->key) {
+                struct instructMapEntry* tmp = entries[i];
+                entries[i] = entries[j];
+                entries[j] = tmp;
+            }
+        }
+    }
+
+    // 4. Imprimir instruções em ordem
+    for (int i = 0; i < count; i++) {
+        struct instruction* inst = entries[i]->value;
+        const char* opname;
+
+        switch (inst->op_code) {
+            case OPATR:      opname = "OPATR"; break;
+            case OPSOMA:     opname = "OPSOMA"; break;
+            case OPMULT:     opname = "OPMULT"; break;
+            case OPSUB:      opname = "OPSUB"; break;
+            case OPDIV:      opname = "OPDIV"; break;
+            case OPMAIS:     opname = "OPMAIS"; break;
+            case OPMENOS:    opname = "OPMENOS"; break;
+            case OPMOD:      opname = "OPMOD"; break;
+            case OPEQU:      opname = "OPEQU"; break;
+            case OPDIF:      opname = "OPDIF"; break;
+            case JEQZ:       opname = "JEQZ"; break;
+            case OPNEG:      opname = "OPNEG"; break;
+            case EMPTY:      opname = "EMPTY"; break;
+            case PRINTF:     opname = "PRINTF"; break;
+            case SCANF:      opname = "SCANF"; break;
+            case BLOCK:      opname = "BLOCK"; break;
+            case BLOCKEND:   opname = "BLOCKEND"; break;
+            case JUMP:       opname = "JUMP"; break;
+            case OPBOR:      opname = "OPBOR"; break;
+            case OPBAND:     opname = "OPBAND"; break;
+            case OPMAIOR:    opname = "OPMAIOR"; break;
+            case OPMENOR:    opname = "OPMENOR"; break;
+            case OPMAIORIG:  opname = "OPMAIORIG"; break;
+            case OPMENORIG:  opname = "OPMENORIG"; break;
+            case ACESSIND:   opname = "ACESSIND"; break;
+            default:         opname = "UNKNOWN"; break;
+        }
+
+        printf("[%03d] %s", entries[i]->key, opname);
+        // Argumento 0
+        if (inst->args[0]) {
+            printf(" %s", inst->args[0]);
+
+            struct symbol* s = findSymbol(rootTable(), inst->args[0]);
+            if (s) {
+                switch (s->t) {
+                    case int_t:
+                        printf("(%d)", getInt(s));
+                        break;
+                    case float_t:
+                        printf("(%.3f)", getFloat(s));
+                        break;
+                    case string_t:
+                        printf("(\"%s\")", getString(s));
+                        break;
+                }
+            }
+        }
+
+        // Argumento 1
+        if (inst->args[1]) {
+            printf(", %s", inst->args[1]);
+
+            struct symbol* s = findSymbol(rootTable(), inst->args[1]);
+            if (s) {
+                switch (s->t) {
+                    case int_t:
+                        printf("(%d)", getInt(s));
+                        break;
+                    case float_t:
+                        printf("(%.3f)", getFloat(s));
+                        break;
+                    case string_t:
+                        printf("(\"%s\")", getString(s));
+                        break;
+                }
+            }
+        }
+
+        // Resultado
+        if (inst->result) {
+            printf(" -> %s", inst->result);
+
+            struct symbol* s = findSymbol(rootTable(), inst->result);
+            if (s) {
+                switch (s->t) {
+                    case int_t:
+                        printf("(%d)", getInt(s));
+                        break;
+                    case float_t:
+                        printf("(%.3f)", getFloat(s));
+                        break;
+                    case string_t:
+                        printf("(\"%s\")", getString(s));
+                        break;
+                }
+            }
+        }
+
+        printf("\n");
+        printf("\n");
+    }
+
+    free(entries);
+    printf("==============================\n");
+}
+
+
 // Insere ou atualiza a instrução no mapa simples (implementação simples de mapa)
 static void instructs_insert(int key, struct instruction* value) {
     struct instructMapEntry* entry = instructs_;
@@ -113,16 +257,26 @@ void interprete(struct symtab* st) {
             case BLOCK:
                 auxt = st; // aponta para o primeiro
                 find = 0;
+                //printf("[BLOCK] antes de entrar no bloco id=%d, tabcur=%p pai%p\n", auxt->id, (void*)auxt, (void*)auxt->parent);
                 while (auxt && !find) {
                     find = (auxt->id == atoi(aux->args[0]));
                     if (!find) auxt = auxt->next;
                 }
-                if (find) tabcur = auxt;
+                if (find) {
+                    //printf("[BLOCK] Entrando no bloco id=%d, tabcur=%p\n", auxt->id, (void*)auxt);
+                    tabcur = auxt;
+                }
                 break;
 
             case BLOCKEND:
-                if (tabcur)
+                //printf("[BLOCKEND] Saindo do bloco id=%d, tabcur=%p\n", tabcur->id, (void*)tabcur);
+
+                if (tabcur) {
                     tabcur = tabcur->parent;
+                    //printf("[BLOCKEND] Saindo do bloco tabcur=%p pai %p\n", (void*)tabcur, (void*)tabcur->parent);
+                }
+                    
+		
                 break;
 
             case PRINTF:
@@ -150,13 +304,32 @@ void interprete(struct symtab* st) {
                 }
                 break;
 
-            case JEQZ:
-                s0 = findSymbol(tabcur, aux->args[0]);
-                if (s0 && getInt(s0) == 0) {
-                    current_code = atoi(aux->args[1]);
-                    continue; // pula incremento
-                }
-                break;
+			case JEQZ:
+				s0 = findSymbol(tabcur, aux->args[0]);
+				if (!s0) {
+					//printf("[ERRO] JEQZ: símbolo '%s' não encontrado!\n", aux->args[0]);
+				}
+				else {
+					//printf("[DEBUG] JEQZ : símbolo '%s' valor = %d\n", aux->args[0], getInt(s0));
+					int cond = 0;
+					switch (s0->t) {
+						case int_t:
+							cond = getInt(s0);
+							break;
+						case float_t:
+							cond = (getFloat(s0) != 0.0f);
+							break;
+						case string_t:
+							cond = (getString(s0)[0] != '\0');
+							break;
+					}
+					if (!cond) {
+						//printf("[DEBUG] JEQZ salta para %s\n", aux->args[1]);
+						current_code = atoi(aux->args[1]);
+						continue;
+					}
+				}
+	break;
 
             case JUMP:
                 current_code = atoi(aux->args[0]);

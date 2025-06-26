@@ -22,7 +22,10 @@ int gen3ai(int op_code, const char* arg1, const char* arg2, const char* result, 
 // Interpretador executa a tabela de símbolos
 void interprete(struct symtab* st);
 
+int nextInstructionCode();
+
 // Atualiza instrução com endereço alvo (backpatch)
 void backpatch(int codins, const char* arg2);
 
+void disassemble() ;
 #endif
