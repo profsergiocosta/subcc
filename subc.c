@@ -1,18 +1,17 @@
+
 #include <stdio.h>
 #include <string.h>
 
 #include "symbol.h"
 #include "mstring.h"
 #include "error.h"
-
 #include "subc.h"
 #include "lexical.h"
 #include "interprete.h"
 
-
 char *newTemp(TYPE cons);
 void newConst(TYPE cons);
-void program();
+void programa();
 void block();
 int dec();
 int type();
@@ -45,6 +44,44 @@ char* arg_;
 Token *token_;
 
 struct symtab* curTab_ = 0;
+
+
+void programa() {
+    token_ = nextToken();
+    if (token_->type == KW_MAIN) {
+        token_ = nextToken();
+        if (token_->type == TK_APAREN) {
+            token_ = nextToken();
+            if (token_->type == TK_FPAREN) {
+                token_ = nextToken();
+                block();
+            }
+            else
+                error(token_->line, EXPEC, ")");
+        }
+        else
+            error(token_->line, EXPEC, "(");
+    }
+    else
+        error(token_->line, EXPEC, "main");
+}
+
+int executa(const char* filename) {
+    if (openFile(filename)) {
+        init();
+        programa();
+        token_ = nextToken();
+        closeFile();
+        disassemble();
+        interprete(rootTable());
+        return 1;
+    }
+    else {
+        printf("error to open file: %s\n", filename);
+        return 0;
+    }
+}
+
 
 int dec() {
     while (type())
@@ -657,90 +694,6 @@ void atribuicao() {
         error(token_->line, EXPEC, "=");
 }
 
-void programa() {
-    token_ = nextToken();
-    if (token_->type == KW_MAIN) {
-        token_ = nextToken();
-        if (token_->type == TK_APAREN) {
-            token_ = nextToken();
-            if (token_->type == TK_FPAREN) {
-                token_ = nextToken();
-                block();
-				//dec();
-        		//listComand();
-            }
-            else
-                error(token_->line, EXPEC, ")");
-        }
-        else
-            error(token_->line, EXPEC, "(");
-    }
-    else
-        error(token_->line, EXPEC, "Main");
-}
-
-int executa(const char* filename) {
-    if (openFile(filename)) {
-        init();
-        programa();
-        token_ = nextToken();
-        closeFile();
-		disassemble();
-
-        interprete(rootTable());
-        return 1;
-    }
-    else {
-        printf("error to open file: %s\n", filename);
-        return 0;
-    }
-}
-
-
-/*
-char* newTemp(TYPE cons) {
-    char Buf[10];
-    sprintf(Buf, "%i", numtemp_);
-
-    char var[50];
-    strcpy(var, "_TEMP_");
-    strcat(var, Buf);
-
-    // ✅ Cria sempre no escopo raiz
-    insertSymbol(rootTable(), str(var), cons, 0);  
-	
-
-    numtemp_++;
-
-    return str(var);
-}
-
-
-void newConst(TYPE cons) {
-    char Buf[10];
-    sprintf(Buf, "%i", numtemp_);
-
-    char cons_name[50];
-    strcpy(cons_name, "_CONST_");
-    strcat(cons_name, Buf);
-
-    char* cname = str(cons_name);
-
-    // ✅ Sempre cria no rootTable()
-    insertSymbol(rootTable(), cname, cons, 0);
-
-    if (cons == int_t)
-        setValueInt(findSymbol(rootTable(), cons_name), atoi(token_->value));
-    else if (cons == string_t)
-        setValueString(findSymbol(rootTable(), cons_name), token_->value);
-    else if (cons == float_t)
-        setValueFloat(findSymbol(rootTable(), cons_name), (float)atof(token_->value));
-
-    arg_ = cname;
-
-    numtemp_++;
-}
-	*/
 
 
 char* newTemp(TYPE cons) {
