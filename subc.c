@@ -158,85 +158,129 @@ void block() {
 void sPrintf() {
     char* arg1;
     char* arg2;
+
     token_ = nextToken();
 
-    if (token_->type == TK_APAREN) {
-        token_ = nextToken();
+    if (token_->type != TK_APAREN) {
+        error(token_->line, EXPEC, "(");
+        return;
+    }
+    token_ = nextToken();
 
-        if (token_->type == TK_STRING) {
-            // Copia o valor do token para um buffer modificável
-            char *str1 = strdup(token_->value);
-            if (!str1) {
+    if (token_->type != TK_STRING) {
+        error(token_->line, EXPEC, "string");
+        return;
+    }
+
+    // Copia string completa
+    char* str_full = strdup(token_->value);
+    if (!str_full) {
+        error(token_->line, EXPEC, "memory allocation failed");
+        return;
+    }
+
+    // Conta quantos % tem
+    int percent_count = 0;
+    for (char* p = str_full; *p; p++) {
+        if (*p == '%')
+            percent_count++;
+    }
+
+    token_ = nextToken();
+
+    if (percent_count == 0) {
+        // Sem %, só imprime tudo
+        arg1 = newTemp(string_t);
+        setValueString(findSymbol(curTab_, arg1), str_full);
+        gen3ai(PRINTF, arg1, "", "", 0);
+
+    } else if (percent_count == 1) {
+        // Um só %, imprime tudo em uma printf
+        arg1 = newTemp(string_t);
+        setValueString(findSymbol(curTab_, arg1), str_full);
+
+        if (token_->type != TK_VIRG) {
+            free(str_full);
+            error(token_->line, EXPEC, ",");
+            return;
+        }
+        token_ = nextToken();
+        expr();
+        arg2 = str(arg_);
+
+        gen3ai(PRINTF, arg1, arg2, "", 0);
+
+    } else {
+        // Mais de um %, precisamos quebrar ANTES do próximo %
+        char* start = str_full;
+        while (1) {
+            char* next_percent = strchr(start, '%');
+            if (!next_percent) {
+                break; // não deveria acontecer aqui
+            }
+
+            // Encontrar o próximo % depois deste
+            char* after_current = next_percent + 2;
+            char* next_next = strchr(after_current, '%');
+
+            size_t len;
+            if (next_next) {
+                // Vai do início até antes do próximo %
+                len = (next_next - start);
+            } else {
+                // Último bloco vai até o fim
+                len = strlen(start);
+            }
+
+            char* part = (char*)malloc(len + 1);
+            if (!part) {
+                free(str_full);
                 error(token_->line, EXPEC, "memory allocation failed");
                 return;
             }
-            
+            strncpy(part, start, len);
+            part[len] = '\0';
+
+            arg1 = newTemp(string_t);
+            setValueString(findSymbol(curTab_, arg1), part);
+            free(part);
+
+            // Consome argumento
+            if (token_->type != TK_VIRG) {
+                free(str_full);
+                error(token_->line, EXPEC, ",");
+                return;
+            }
             token_ = nextToken();
+            expr();
+            arg2 = str(arg_);
 
-            // Loop para processar cada formato %
-            while (1) {
-                // Procura o próximo %
-                char *percent = strchr(str1, '%');
-                if (!percent)
-                    break;
+            gen3ai(PRINTF, arg1, arg2, "", 0);
 
-                // Copia até o % + 2 caracteres para pegar o especificador (%d, %s, etc)
-                size_t len = (percent - str1) + 2;
-                char *str2 = (char*)malloc(len + 1);
-                if (!str2) {
-                    free(str1);
-                    error(token_->line, EXPEC, "memory allocation failed");
-                    return;
-                }
-                strncpy(str2, str1, len);
-                str2[len] = '\0';
-
-                // Remove a parte copiada de str1 (shift left)
-                memmove(str1, str1 + len, strlen(str1 + len) + 1);
-
-                arg1 = newTemp(string_t);
-                setValueString(findSymbol(curTab_, arg1), str2);
-                free(str2);
-
-                if (token_->type == TK_VIRG) {
-                    token_ = nextToken();
-                    expr();
-                    arg2 = str(arg_);
-                    gen3ai(PRINTF, arg1, arg2, "", 0);
-                }
-                else {
-                    // Se não tem vírgula, sai do loop
-                    break;
-                }
+            if (!next_next) {
+                break; // acabou
             }
 
-            // Após o loop, o que sobrou em str1 é o texto restante
-            if (strlen(str1) > 0) {
-                arg1 = newTemp(string_t);
-                setValueString(findSymbol(curTab_, arg1), str1);
-                gen3ai(PRINTF, arg1, "", "", 0);
-            }
-
-            free(str1);
+            start = next_next;
         }
-        else {
-            error(token_->line, EXPEC, "string");
-        }
-
-        if (token_->type == TK_FPAREN)
-            token_ = nextToken();
-        else
-            error(token_->line, EXPEC, ")");
-
-        if (token_->type == TK_PTOVIRG)
-            token_ = nextToken();
-        else
-            error(token_->line, EXPEC, ";");
     }
-    else {
-        error(token_->line, EXPEC, "(");
+
+    free(str_full);
+
+    if (token_->type != TK_FPAREN) {
+        error(token_->line, EXPEC, ")");
+        return;
     }
+    token_ = nextToken();
+
+    if (token_->type != TK_PTOVIRG) {
+        error(token_->line, EXPEC, ";");
+        return;
+    }
+    token_ = nextToken();
 }
+
+
 
 
 void sScanf() {
