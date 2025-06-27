@@ -287,23 +287,18 @@ void interprete(struct symtab* st) {
             case BLOCK:
                 auxt = st; // aponta para o primeiro
                 find = 0;
-                //printf("[BLOCK] antes de entrar no bloco id=%d, tabcur=%p pai%p\n", auxt->id, (void*)auxt, (void*)auxt->parent);
                 while (auxt && !find) {
                     find = (auxt->id == atoi(aux->args[0]));
                     if (!find) auxt = auxt->next;
                 }
                 if (find) {
-                    //printf("[BLOCK] Entrando no bloco id=%d, tabcur=%p\n", auxt->id, (void*)auxt);
                     tabcur = auxt;
                 }
                 break;
 
             case BLOCKEND:
-                //printf("[BLOCKEND] Saindo do bloco id=%d, tabcur=%p\n", tabcur->id, (void*)tabcur);
-
-                if (tabcur) {
+                  if (tabcur) {
                     tabcur = tabcur->parent;
-                    //printf("[BLOCKEND] Saindo do bloco tabcur=%p pai %p\n", (void*)tabcur, (void*)tabcur->parent);
                 }
                     
 		
@@ -336,11 +331,7 @@ void interprete(struct symtab* st) {
 
 			case JEQZ:
 				s0 = findSymbol(tabcur, aux->args[0]);
-				if (!s0) {
-					//printf("[ERRO] JEQZ: símbolo '%s' não encontrado!\n", aux->args[0]);
-				}
-				else {
-					//printf("[DEBUG] JEQZ : símbolo '%s' valor = %d\n", aux->args[0], getInt(s0));
+				if (s0) {					
 					int cond = 0;
 					switch (s0->t) {
 						case int_t:
@@ -354,7 +345,6 @@ void interprete(struct symtab* st) {
 							break;
 					}
 					if (!cond) {
-						//printf("[DEBUG] JEQZ salta para %s\n", aux->args[1]);
 						current_code = atoi(aux->args[1]);
 						continue;
 					}
