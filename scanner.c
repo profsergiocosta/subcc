@@ -5,7 +5,7 @@
 
 #include "mstring.h"
 #include "error.h"
-#include "lexical.h"
+#include "scanner.h"
 
 
 

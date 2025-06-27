@@ -1,5 +1,5 @@
-#ifndef LEXICAL_H
-#define LEXICAL_H
+#ifndef SCANNER_H
+#define SCANNER_H
 
 /**
  * Enumeração de tokens e palavras-chave.
@@ -29,4 +29,4 @@ int openFile(const char *filename);
 void closeFile();
 Token* nextToken();
 
-#endif /* LEXICAL_H */
+#endif /* SCANNER_H */
