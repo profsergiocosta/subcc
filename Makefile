@@ -5,9 +5,9 @@ CFLAGS=-Wno-deprecated
 OUTPUT="subc"
 
 # Source files
-SRCS="interprete.c" "lexical.c" "main.c" "subc.c" "symbol.c" "mstring.c" "error.c"
+SRCS="interprete.c" "scanner.c" "parser.c" "subc.c" "symbol.c" "mstring.c" "error.c"
 # Output object files (*.o)
-OBJS="interprete.o" "lexical.o" "main.o" "subc.o" "symbol.o" "mstring.o" "error.o"  
+OBJS="interprete.o" "scanner.o" "parser.o" "subc.o" "symbol.o" "mstring.o" "error.o"  
 
 # Standard targets
 

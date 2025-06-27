@@ -1,6 +1,9 @@
-#ifndef LEXICAL_H
-#define LEXICAL_H
+#ifndef SCANNER_H
+#define SCANNER_H
 
+/**
+ * Enumeração de tokens e palavras-chave.
+ */
 enum {
     KW_MAIN, KW_INT, KW_FLOAT, KW_IF, KW_ELSE, KW_WHILE, KW_PRINTF, KW_SCANF,
     TK_IDENT, TK_INT, TK_FLOAT, TK_STRING, TK_MAIS, TK_MENOS, TK_VEZES, TK_DIVISAO, TK_PTO, TK_VIRG,
@@ -9,15 +12,21 @@ enum {
     TK_ENDER, TK_AND, TK_OR, TK_EOF, TK_ERROR, TK_UNDEFINED, TK_COMMENT
 };
 
+/**
+ * Estrutura de Token.
+ */
 typedef struct Token {
     int type;
     char* value;
     int line;
 } Token;
 
+/**
+ * Funções principais do scanner.
+ */
 void init();
-int  openFile(const char *filename);
+int openFile(const char *filename);
 void closeFile();
-struct Token* nextToken();
+Token* nextToken();
 
-#endif /* LEXICAL_H */
+#endif /* SCANNER_H */
