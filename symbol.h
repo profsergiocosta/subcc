@@ -42,8 +42,8 @@ struct symtab* newTable(struct symtab* enclosing_scope);
 struct symbol* insertSymbol(struct symtab* st, char* name, TYPE t, int size);
 struct symbol* newSymbol(char* name, TYPE t, int size);
 struct symcell* insertSymbolCell(struct symcell* list, struct symbol* sym);
-struct symbol* findSymbol(struct symtab* st, char* name);
-struct symbol* findSymbolInList(struct symcell* list, char* name);
+struct symbol* findSymbol(struct symtab* st, const char* name);
+struct symbol* findSymbolInList(struct symcell* list, const char* name);
 
 // Atribuição de valores
 int assignSymbolSymbol(struct symbol* sym, struct symbol* other);

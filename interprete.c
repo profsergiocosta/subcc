@@ -28,7 +28,232 @@ int nextInstructionCode() {
 
 void printEscaped(const char* s);
 
+// Função auxiliar para imprimir argumento com valor constante
+void printArgWithConst(const char* arg) {
+    printf("%s", arg);
+
+    struct symbol* s = findSymbol(rootTable(), arg);
+    if (s) {
+        switch (s->t) {
+            case int_t:
+                printf("(%d)", getInt(s));
+                break;
+            case float_t:
+                printf("(%.3f)", getFloat(s));
+                break;
+            case string_t:
+                printf("(\"");
+                printEscaped(getString(s));
+                printf("\")");
+                break;
+        }
+    }
+}
+
+// Função principal: disassemble em formato 3 endereços
 void disassemble() {
+    printf("==== D I S A S S E M B L Y ====\n");
+
+    // 1. Contar instruções
+    int count = 0;
+    struct instructMapEntry* entry = instructs_;
+    while (entry) {
+        count++;
+        entry = entry->next;
+    }
+
+    if (count == 0) {
+        printf("[nenhuma instrução gerada]\n");
+        return;
+    }
+
+    // 2. Copiar para vetor
+    struct instructMapEntry** entries = malloc(sizeof(struct instructMapEntry*) * count);
+    entry = instructs_;
+    for (int i = 0; i < count; i++) {
+        entries[i] = entry;
+        entry = entry->next;
+    }
+
+    // 3. Ordenar por chave
+    for (int i = 0; i < count - 1; i++) {
+        for (int j = i + 1; j < count; j++) {
+            if (entries[i]->key > entries[j]->key) {
+                struct instructMapEntry* tmp = entries[i];
+                entries[i] = entries[j];
+                entries[j] = tmp;
+            }
+        }
+    }
+
+    // 4. Imprimir instruções em formato 3 endereços
+    for (int i = 0; i < count; i++) {
+        struct instruction* inst = entries[i]->value;
+
+        printf("L%03d: ", entries[i]->key);
+
+        switch (inst->op_code) {
+            case OPATR:
+                printf("%s := ", inst->result);
+                printArgWithConst(inst->args[0]);
+                break;
+
+            case OPSOMA:
+                printf("%s := ", inst->result);
+                printArgWithConst(inst->args[0]);
+                printf(" + ");
+                printArgWithConst(inst->args[1]);
+                break;
+
+            case OPSUB:
+                printf("%s := ", inst->result);
+                printArgWithConst(inst->args[0]);
+                printf(" - ");
+                printArgWithConst(inst->args[1]);
+                break;
+
+            case OPMULT:
+                printf("%s := ", inst->result);
+                printArgWithConst(inst->args[0]);
+                printf(" * ");
+                printArgWithConst(inst->args[1]);
+                break;
+
+            case OPDIV:
+                printf("%s := ", inst->result);
+                printArgWithConst(inst->args[0]);
+                printf(" / ");
+                printArgWithConst(inst->args[1]);
+                break;
+
+            case OPMOD:
+                printf("%s := ", inst->result);
+                printArgWithConst(inst->args[0]);
+                printf(" %% ");
+                printArgWithConst(inst->args[1]);
+                break;
+
+            case OPMAIS: // unário
+                printf("%s := +", inst->result);
+                printArgWithConst(inst->args[0]);
+                break;
+
+            case OPMENOS: // unário
+                printf("%s := -", inst->result);
+                printArgWithConst(inst->args[0]);
+                break;
+
+            case OPNEG:
+                printf("%s := -", inst->result);
+                printArgWithConst(inst->args[0]);
+                break;
+
+            case OPEQU:
+                printf("%s := ", inst->result);
+                printArgWithConst(inst->args[0]);
+                printf(" == ");
+                printArgWithConst(inst->args[1]);
+                break;
+
+            case OPDIF:
+                printf("%s := ", inst->result);
+                printArgWithConst(inst->args[0]);
+                printf(" != ");
+                printArgWithConst(inst->args[1]);
+                break;
+
+            case OPMAIOR:
+                printf("%s := ", inst->result);
+                printArgWithConst(inst->args[0]);
+                printf(" > ");
+                printArgWithConst(inst->args[1]);
+                break;
+
+            case OPMENOR:
+                printf("%s := ", inst->result);
+                printArgWithConst(inst->args[0]);
+                printf(" < ");
+                printArgWithConst(inst->args[1]);
+                break;
+
+            case OPMAIORIG:
+                printf("%s := ", inst->result);
+                printArgWithConst(inst->args[0]);
+                printf(" >= ");
+                printArgWithConst(inst->args[1]);
+                break;
+
+            case OPMENORIG:
+                printf("%s := ", inst->result);
+                printArgWithConst(inst->args[0]);
+                printf(" <= ");
+                printArgWithConst(inst->args[1]);
+                break;
+
+            case OPBOR:
+                printf("%s := ", inst->result);
+                printArgWithConst(inst->args[0]);
+                printf(" | ");
+                printArgWithConst(inst->args[1]);
+                break;
+
+            case OPBAND:
+                printf("%s := ", inst->result);
+                printArgWithConst(inst->args[0]);
+                printf(" & ");
+                printArgWithConst(inst->args[1]);
+                break;
+
+            case JEQZ:
+                printf("if ");
+                printArgWithConst(inst->args[0]);
+                printf(" == 0 goto L%s", inst->result);
+                break;
+
+            case JUMP:
+                printf("goto L%s", inst->result);
+                break;
+
+            case PRINTF:
+                printf("print ");
+                printArgWithConst(inst->args[0]);
+                break;
+
+            case SCANF:
+                printf("read %s", inst->result);
+                break;
+
+            case BLOCK:
+                printf("// BEGIN BLOCK");
+                break;
+
+            case BLOCKEND:
+                printf("// END BLOCK");
+                break;
+
+            case EMPTY:
+                printf("// EMPTY");
+                break;
+
+            case ACESSIND:
+                printf("%s := *", inst->result);
+                printArgWithConst(inst->args[0]);
+                break;
+
+            default:
+                printf("// UNKNOWN OPCODE");
+                break;
+        }
+
+        printf("\n");
+    }
+
+    free(entries);
+    printf("==============================\n");
+}
+
+
+void disassemble_code() {
     printf("==== D I S A S S E M B L Y ====\n");
 
     // 1. Contar quantas instruções existem

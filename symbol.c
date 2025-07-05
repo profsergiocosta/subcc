@@ -42,7 +42,7 @@ struct symtab* newTable(struct symtab* enclosing_scope) {
 }
 
 
-struct symbol* findSymbol(struct symtab* st, char* name) {
+struct symbol* findSymbol(struct symtab* st, const char* name) {
     while (st) {
         struct symbol* sym = findSymbolInList(st->list, name);
         if (sym) return sym;
@@ -51,7 +51,7 @@ struct symbol* findSymbol(struct symtab* st, char* name) {
     return NULL;
 }
 
-struct symbol* findSymbolInList(struct symcell* list, char* name) {
+struct symbol* findSymbolInList(struct symcell* list,const char* name) {
     while (list) {
         if (strcmp(name, list->info->name) == 0)
             return list->info;
