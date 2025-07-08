@@ -1,13 +1,12 @@
 main () {
 
-    int a, b;
+    int a, b,c, d;
+    a = b + c;
+    printf("--");
 
-    a = 10;
+    a = (b + c) * d;
+    printf("--");
 
-    b = a * 3;
+    a = (b + c) * (b + c);
 
-    while (a < 100) {
-        a = a + 10;
-        printf ("%d\n",a);
-    }
 }

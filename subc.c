@@ -36,6 +36,8 @@ int main(int argc, char* argv[]) {
 
         // Fase 2: Opcional - imprime instruções geradas
         disassemble();
+        
+        disassemble_code();
 
         // Fase 3: Interpretação
         interprete(rootTable());
